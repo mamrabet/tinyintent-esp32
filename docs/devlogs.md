@@ -273,3 +273,37 @@ catch-all category.
 The dataset is intentionally small at this stage. Its purpose is to validate
 the taxonomy and ML pipeline before investing in larger-scale data collection.
 
+### v0.2 Dataset Validation
+
+A dependency-free Python validation utility was added for the TinyIntent
+dataset.
+
+The validator checks:
+
+- Dataset structure and required fields
+- Valid intent labels
+- Empty commands
+- Exact duplicates across dataset splits
+- Class distribution
+- Command lengths
+- Vocabulary size
+- Separation of UNKNOWN/OOD examples from supported intents
+
+Validation passed successfully.
+
+Dataset statistics:
+
+Supported examples: 60
+UNKNOWN/OOD examples: 10
+Training examples: 40
+Validation examples: 10
+Test examples: 10
+Vocabulary size: 127 words
+Average command: 4.17 words
+
+All five supported intents are evenly represented in each split.
+
+The dataset remains intentionally small. Metrics produced from this dataset
+will be treated as an experimental baseline rather than evidence of model
+generalisation.
+
