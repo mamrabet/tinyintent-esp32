@@ -213,3 +213,33 @@ bring-up but may need more graceful recovery later.
 These limitations are accepted for v0.1 and will be revisited only when later
 requirements justify the additional complexity.
 
+## v0.2  Dataset and classical ML baseline 
+
+### v0.2 Intent Taxonomy
+
+The initial intent-classification taxonomy was defined with five
+supported intents:
+
+- SYSTEM_CONTROL
+- SYSTEM_STATUS
+- NETWORK_CONTROL
+- DIAGNOSTICS
+- HELP
+
+Commands outside these supported capabilities are classified as
+UNKNOWN.
+
+The taxonomy deliberately keeps the first ML problem small and uses
+intent classes with explicit semantic boundaries.
+
+A distinction was established between read-only status requests and
+diagnostic operations:
+
+SYSTEM_STATUS -> query existing information
+DIAGNOSTICS -> request a diagnostic operation
+
+UNKNOWN will later be treated as an out-of-distribution problem rather
+than simply another normal supported command.
+
+
+
