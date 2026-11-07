@@ -73,7 +73,7 @@ void initialise_display()
     esp_lcd_panel_dev_config_t panel_config{};
     
     panel_config.reset_gpio_num = lcd_rst;      
-    panel_config.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB;      
+    panel_config.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR;      
     panel_config.bits_per_pixel = 16; 
     panel_config.data_endian = LCD_RGB_DATA_ENDIAN_BIG; 
     panel_config.flags = {};  
@@ -99,9 +99,10 @@ void initialise_display()
 }
 
 void clear_display(uint16_t color){
+    const uint16_t panel_color = static_cast<uint16_t>((color << 8) | (color >> 8));
     if (panel_handle){
-    static uint16_t pixels[LCD_WIDTH*LCD_HEIGHT];
-    std::fill(pixels, pixels + LCD_WIDTH*LCD_HEIGHT, color); 
-    ESP_ERROR_CHECK(esp_lcd_panel_draw_bitmap(panel_handle,0,0,LCD_WIDTH,LCD_HEIGHT,pixels));
+        static uint16_t pixels[LCD_WIDTH*LCD_HEIGHT];
+        std::fill(pixels, pixels + LCD_WIDTH*LCD_HEIGHT, panel_color); 
+        ESP_ERROR_CHECK(esp_lcd_panel_draw_bitmap(panel_handle,0,0,LCD_WIDTH,LCD_HEIGHT,pixels));
     }
 }

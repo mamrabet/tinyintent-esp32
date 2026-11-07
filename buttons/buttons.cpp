@@ -30,7 +30,7 @@ void initialise_buttons()
     };
     ESP_ERROR_CHECK(gpio_config(&io_conf));
 
-
+    ESP_LOGI(TAG, "Buttons initialised");
 }
 
 static bool button_pressed(ButtonState &button)
