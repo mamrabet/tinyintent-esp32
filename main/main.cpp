@@ -1,6 +1,7 @@
 #include "esp_log.h"
 #include "system_info.hpp"
 #include "display.hpp"
+#include "buttons.hpp"
 
 static const char *TAG = "TinyIntent";
 
@@ -29,5 +30,13 @@ extern "C" void app_main(void)
    
     
     initialise_display();
+    initialise_buttons();
+
+    while(true){
+        if (get_button_event() == ButtonEvent::BUTTON_B_PRESSED){
+            ESP_LOGI(TAG, "Button B Pressed.");
+        }
+    }
+
 
 }
