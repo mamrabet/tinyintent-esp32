@@ -1,5 +1,6 @@
 #include "esp_log.h"
 #include "system_info.hpp"
+#include "display.hpp"
 
 static const char *TAG = "TinyIntent";
 
@@ -26,5 +27,7 @@ extern "C" void app_main(void)
         ESP_LOGI(TAG, "PSRAM not available");
     }
    
+    
+    initialise_display();
 
 }
