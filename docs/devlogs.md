@@ -243,3 +243,33 @@ than simply another normal supported command.
 
 
 
+### v0.2 Initial Dataset
+
+The first TinyIntent intent-classification dataset was created.
+
+The supported dataset contains 60 manually reviewable commands distributed
+equally across five intents:
+
+- SYSTEM_CONTROL
+- SYSTEM_STATUS
+- NETWORK_CONTROL
+- DIAGNOSTICS
+- HELP
+
+The data is split into:
+
+Training: 40 examples
+Validation: 10 examples
+Test: 10 examples
+
+An additional set of 10 unsupported commands is maintained separately for
+future out-of-distribution and UNKNOWN rejection experiments.
+
+UNKNOWN is deliberately not trained as an ordinary intent class. The long-term
+goal is for TinyIntent to reject unsupported inputs based on model confidence
+or another OOD mechanism rather than learning UNKNOWN as a miscellaneous
+catch-all category.
+
+The dataset is intentionally small at this stage. Its purpose is to validate
+the taxonomy and ML pipeline before investing in larger-scale data collection.
+

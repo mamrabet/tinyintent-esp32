@@ -1,0 +1,17 @@
+[
+{"text": "switch the controller off", "intent": "SYSTEM_CONTROL"},
+{"text": "boot the system", "intent": "SYSTEM_CONTROL"},
+
+{"text": "report available memory", "intent": "SYSTEM_STATUS"},
+{"text": "tell me the firmware version", "intent": "SYSTEM_STATUS"},
+
+{"text": "disable wifi", "intent": "NETWORK_CONTROL"},
+{"text": "start bluetooth", "intent": "NETWORK_CONTROL"},
+
+{"text": "run a hardware check", "intent": "DIAGNOSTICS"},
+{"text": "perform a health check", "intent": "DIAGNOSTICS"},
+
+{"text": "which operations are supported", "intent": "HELP"},
+{"text": "tell me what this device can do", "intent": "HELP"}
+]
+

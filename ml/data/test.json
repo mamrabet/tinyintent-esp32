@@ -1,0 +1,17 @@
+[
+{"text": "restart the system", "intent": "SYSTEM_CONTROL"},
+{"text": "enter standby mode", "intent": "SYSTEM_CONTROL"},
+
+{"text": "report the current device status", "intent": "SYSTEM_STATUS"},
+{"text": "how much ram is free", "intent": "SYSTEM_STATUS"},
+
+{"text": "disconnect wifi", "intent": "NETWORK_CONTROL"},
+{"text": "switch bluetooth on", "intent": "NETWORK_CONTROL"},
+
+{"text": "test whether the hardware is working properly", "intent": "DIAGNOSTICS"},
+{"text": "start a system diagnostic", "intent": "DIAGNOSTICS"},
+
+{"text": "help me use the device", "intent": "HELP"},
+{"text": "list the things you understand", "intent": "HELP"}
+]
+
