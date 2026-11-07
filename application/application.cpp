@@ -1,6 +1,10 @@
+#include "esp_log.h"
 #include "buttons.hpp"
 #include "system_info.hpp"
 #include "display.hpp"
+
+static const char *TAG = "Application";
+
 
 enum class AppState {
     INIT,
@@ -18,6 +22,24 @@ void initialise_application(){
     initialise_display();
     initialise_buttons();
     system_info = get_system_info();
+
+    ESP_LOGI(TAG,"Cores: %d", system_info.num_cores);
+    ESP_LOGI(TAG,"Revision: %d", system_info.chip_rev);
+    if (system_info.flash_size_bytes>0){
+    ESP_LOGI(TAG,"Flash size: %lu MB", system_info.flash_size_bytes / (1024 * 1024));
+    } else {
+        ESP_LOGE(TAG,"Couldn't retrieve flash size information");
+    }
+
+    ESP_LOGI(TAG, "Internal RAM free: %zu bytes", system_info.internal_free_heap_bytes);
+    ESP_LOGI(TAG, "Internal RAM minimum: %zu bytes", system_info.min_internal_free_heap_bytes);
+    if (system_info.psram_available){
+        ESP_LOGI(TAG, "PSRAM available");
+        ESP_LOGI(TAG, "PSRAM total: %zu bytes", system_info.psram_total_bytes);
+        ESP_LOGI(TAG, "PSRAM free: %zu bytes", system_info.psram_free_bytes);
+    } else {
+        ESP_LOGI(TAG, "PSRAM not available");
+    }
     current_state = AppState::READY;
     clear_display(READY_COLOR);
 

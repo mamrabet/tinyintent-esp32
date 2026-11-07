@@ -28,7 +28,33 @@ Hardware resources such as available flash, RAM, and PSRAM will be measured on t
 
 **ML functionality:** Not implemented
 
-The current focus is establishing a reliable and reproducible embedded firmware foundation before introducing machine-learning components.
+v0.1 establishes the embedded platform required by later Edge AI milestones.
+
+Implemented functionality:
+
+- ESP-IDF C++ firmware
+- Component-based firmware architecture
+- Runtime hardware diagnostics
+- Internal RAM and PSRAM monitoring
+- GC9107 display support
+- RGB565 rendering
+- Debounced onboard button input
+- Application state machine
+- FreeRTOS-aware application loop
+
+Current application states:
+
+READY
+|
+| Button A
+v
+SYSTEM_INFO
+|
+| Button B
+v
+READY
+
+The temporary v0.1 UI represents these states using solid colors.
 
 ## Roadmap
 
@@ -47,7 +73,16 @@ The current focus is establishing a reliable and reproducible embedded firmware 
 
 ## Building
 
-Build instructions will be added during the v0.1 embedded platform bring-up.
+The firmware uses ESP-IDF 5.5.x and targets the ESP32-S3.
+
+Standard ESP-IDF workflow:
+
+idf.py set-target esp32s3
+idf.py build
+idf.py flash
+idf.py monitor
+
+Board-specific configuration is stored in the project configuration.
 
 ## License
 

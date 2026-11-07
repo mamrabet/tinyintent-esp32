@@ -11,8 +11,8 @@ struct SystemInfo {
     uint8_t num_cores = 0;
     uint16_t chip_rev = 0;
     uint32_t flash_size_bytes = 0;
-    std::size_t free_heap_bytes = 0;
-    std::size_t min_free_heap_bytes = 0;
+    std::size_t internal_free_heap_bytes = 0;
+    std::size_t min_internal_free_heap_bytes = 0;
     std::size_t psram_total_bytes = 0;
     std::size_t psram_free_bytes = 0;
 };
