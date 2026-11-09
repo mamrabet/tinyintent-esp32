@@ -20,6 +20,8 @@ SUPPORTED_PATHS = {
     "validation": DATA_DIR / "validation.json",
     "test": DATA_DIR / "test.json",
 }
+VOCAB_PATH = MODEL_DIR / "vocabulary.json"
+
 
 INTENTS = [
     "DIAGNOSTICS",
@@ -100,6 +102,57 @@ def main() -> None:
             y_test.append(record["intent"])
 
         vocabulary = build_vocabulary(x_train)
+        with VOCAB_PATH.open("w", encoding="utf-8") as file:
+            json.dump(
+                vocabulary,
+                file,
+                indent=2,
+                sort_keys=True,
+            )
+
+        metadata = {
+            "sequence_length": SEQUENCE_LENGTH,
+            "vocab_size": VOCAB_SIZE,
+            "pad_id": 0,
+            "oov_id": 1,
+            "intents": INTENTS,
+        }
+        with (MODEL_DIR / "metadata.json").open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(metadata, file, indent=2)
+
+            GOLDEN_PATH = DATA_DIR / "preprocessing_golden.json"
+            golden_texts = [
+                # Normal known tokens + padding
+                "restart the system",
+                # OOV handling + padding
+                "activate hyperspace drive",
+                # Short input
+                "enable wifi",
+                # Exactly 8 tokens
+                "turn on the system and show device status",
+                # More than 8 tokens, verifies truncation
+                "turn on the system and show device status right now please",
+            ]
+            golden_vectors = [
+                {
+                    "text": text,
+                    "encoded": encode_text(text, vocabulary),
+                }
+                for text in golden_texts
+            ]
+            with GOLDEN_PATH.open("w", encoding="utf-8") as file:
+                json.dump(
+                    golden_vectors,
+                    file,
+                    indent=2,
+                )
+            print(f"Generated {len(golden_vectors)} golden preprocessing vectors")
+            for vector in golden_vectors:
+                print(f"\nText:	{vector['text']}")
+                print(f"Encoded: {vector['encoded']}")
 
         ### Encoding data
         x_train_encoded = [encode_text(text, vocabulary) for text in x_train]

@@ -1,0 +1,13 @@
+{
+  "sequence_length": 8,
+  "vocab_size": 128,
+  "pad_id": 0,
+  "oov_id": 1,
+  "intents": [
+    "DIAGNOSTICS",
+    "HELP",
+    "NETWORK_CONTROL",
+    "SYSTEM_CONTROL",
+    "SYSTEM_STATUS"
+  ]
+}

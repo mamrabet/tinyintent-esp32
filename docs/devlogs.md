@@ -738,4 +738,33 @@ The dynamic-range TensorFlow Lite model is therefore selected as the current
 embedded deployment candidate, while the FP32 TensorFlow Lite model remains
 the numerical reference.
 
+### v0.3 Deployment Contract
+The preprocessing and model interface required for embedded deployment were
+frozen.
+The deployment contract defines:
+	Vocabulary size:   	128
+	Sequence length:     	8
+	PAD ID:              	0
+	OOV ID:              	1
+Intent IDs:
+	0 -> DIAGNOSTICS
+	1 -> HELP
+	2 -> NETWORK_CONTROL
+	3 -> SYSTEM_CONTROL
+	4 -> SYSTEM_STATUS
+The exact training vocabulary is exported to `vocabulary.json`, while model
+and preprocessing constants are stored in `metadata.json`.
+A set of golden preprocessing vectors was generated programmatically using
+the same Python preprocessing implementation used during training.
+The golden vectors cover:
+- Known vocabulary tokens
+- Out-of-vocabulary tokens
+- Padding
+- Maximum-length sequences
+- Sequence truncation
+These vectors will be used to verify exact preprocessing parity between the
+Python training pipeline and the future ESP32 C++ implementation.
+Embedded inference will not be considered valid unless the C++
+preprocessing output matches these golden vectors exactly.
+
 
