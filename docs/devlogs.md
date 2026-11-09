@@ -418,3 +418,45 @@ Therefore no simple confidence threshold was selected for UNKNOWN rejection.
 The classical baseline is now frozen for comparison with the neural
 classifier introduced in v0.3.
 
+### v0.3 Neural Input Preprocessing
+
+A deterministic text preprocessing pipeline was introduced for the neural
+intent classifier.
+
+The preprocessing contract is:
+
+input text
+|
+v
+lowercase tokenization
+|
+v
+vocabulary lookup
+|
++-- known token -> vocabulary ID
++-- unknown token -> OOV ID 1
+|
+v
+truncate to 8 tokens
+|
+v
+pad with PAD ID 0
+|
+v
+fixed 8-element integer sequence
+
+Initial constraints:
+
+Maximum vocabulary: 128 tokens
+Maximum sequence length: 8 tokens
+PAD ID: 0
+OOV ID: 1
+
+The vocabulary is built exclusively from training data and uses deterministic
+ordering so token IDs remain reproducible.
+
+Preprocessing was verified with both known and out-of-vocabulary words.
+
+This preprocessing contract is intentionally simple because the same behavior
+will later need to be reproduced in C++ on the ESP32-S3.
+
