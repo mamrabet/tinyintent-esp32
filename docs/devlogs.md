@@ -668,3 +668,74 @@ are not justified by the current evaluation results.
 The next milestone will focus on exporting the trained model into a format
 suitable for embedded inference.
 
+
+### v0.3 FP32 TensorFlow Lite Export
+
+The frozen neural classifier was exported from Keras to TensorFlow Lite
+without quantization.
+
+Model interface:
+
+Input shape: [1, 8]
+Input type: int32
+Output shape: [1, 5]
+Output type: float32
+
+The input remains integer-valued because it contains token IDs consumed by
+the embedding layer.
+
+Exported model size:
+
+FP32 TFLite model: 13,996 bytes
+
+Inference parity was verified using five fixed commands, including supported
+commands and an input containing out-of-vocabulary tokens.
+
+Results:
+
+Commands tested: 5
+Prediction mismatches: 0
+Maximum absolute difference: 1.192e-7
+Prediction parity: PASS
+
+All tested commands produced the same predicted intent in Keras and
+TensorFlow Lite.
+
+The small numerical differences are consistent with equivalent floating-point
+inference through different runtimes.
+
+The FP32 TensorFlow Lite model is now the reference deployment model against
+which quantized variants will be compared.
+
+### v0.3 Quantization Evaluation
+The frozen neural classifier was evaluated using post-training quantization.
+A full-integer quantization experiment was first attempted using a
+representative calibration dataset built exclusively from training inputs.
+The resulting model was approximately:
+	Full INT8 model size: 8,152 bytes
+However, inference failed inside a quantized DIV operation when processing
+normal padded sequences. The failure appears in the graph associated with
+masked sequence pooling.
+Because the FP32 model had already passed inference parity testing, the issue
+was isolated to the full-integer quantized execution path.
+Dynamic-range quantization was then evaluated without changing the trained
+neural architecture.
+Results:
+	FP32 model size:              	13,996 bytes
+	Dynamic model size:            	8,136 bytes
+	Size reduction:               	41.87%
+	FP32 test accuracy:             	1.00
+	Dynamic test accuracy:          	1.00
+	Dynamic macro F1:               	1.00
+	FP32/Dynamic prediction mismatches: 0 / 10
+	Maximum probability difference: 	0.002467
+The dynamic model preserved all test predictions while reducing model size by
+approximately 42%.
+Full INT8 quantization is not selected for deployment at this stage because
+its runtime failure would require either changing the frozen model architecture
+or further investigation of masked pooling under integer execution.
+The dynamic-range TensorFlow Lite model is therefore selected as the current
+embedded deployment candidate, while the FP32 TensorFlow Lite model remains
+the numerical reference.
+
+
