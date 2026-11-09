@@ -17,6 +17,7 @@ DATA_DIR = Path(__file__).parent / "data"
 SUPPORTED_PATHS = {
     "train": DATA_DIR / "train.json",
     "validation": DATA_DIR / "validation.json",
+    "unknown": DATA_DIR / "unknown.json",
 }
 
 
@@ -41,15 +42,19 @@ def main() -> None:
         y_train = []
         x_validation = []
         y_validation = []
+        x_unknown = []
 
         train_data = load_json(SUPPORTED_PATHS["train"])
         validation_data = load_json(SUPPORTED_PATHS["validation"])
+        unknown_data = load_json(SUPPORTED_PATHS["unknown"])
         for record in train_data:
             x_train.append(record["text"])
             y_train.append(record["intent"])
         for record in validation_data:
             x_validation.append(record["text"])
             y_validation.append(record["intent"])
+        for record in unknown_data:
+            x_unknown.append(record["text"])
 
         print("Training examples:", len(x_train))
         print("Validation examples:", len(x_validation))
@@ -68,6 +73,8 @@ def main() -> None:
         )
         model.fit(x_train, y_train)
 
+        probabilities = model.predict_proba(x_unknown)
+
         print("TF-IDF vocabulary size:", len(model.named_steps["tfidf"].vocabulary_))
 
         y_pred = model.predict(x_validation)
@@ -85,6 +92,30 @@ def main() -> None:
         print("Macro F1: ", f1_score(y_validation, y_pred, average="macro"))
         print("Classification Report: ", classification_report(y_validation, y_pred))
         print("Confusion Matrix: ", confusion_matrix(y_validation, y_pred))
+
+        unknown_confidences = []
+
+        for probs in probabilities:
+            unknown_confidences.append(max(probs))
+
+        validation_probabilities = model.predict_proba(x_validation)
+
+        validation_confidences = [max(probs) for probs in validation_probabilities]
+
+        print("UNKNOWN")
+        print("--------")
+        print("Min confidence: ", min(unknown_confidences))
+        print("Mean confidence: ", sum(unknown_confidences) / len(unknown_confidences))
+        print("Max confidence: ", max(unknown_confidences))
+
+        print("KNOWN")
+        print("--------")
+        print("Min confidence: ", min(validation_confidences))
+        print(
+            "Mean confidence: ",
+            sum(validation_confidences) / len(validation_confidences),
+        )
+        print("Max confidence: ", max(validation_confidences))
 
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as error:
         print(f"JSON extraction failed:\n{error}")

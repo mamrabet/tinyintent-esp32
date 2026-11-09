@@ -344,3 +344,33 @@ vocabulary with the training data.
 The result establishes a functional classical ML baseline, not evidence of
 production-level generalisation.
 
+### v0.2 UNKNOWN / OOD Baseline
+
+The classical TF-IDF + Logistic Regression model was evaluated against
+commands outside TinyIntent's supported intent taxonomy.
+
+The classifier has no UNKNOWN output class and therefore must assign every
+unsupported command to one of the five known intents.
+
+Maximum predicted class probability was used as an initial confidence score.
+
+Results:
+
+KNOWN UNKNOWN
+Minimum confidence 0.235 0.219
+Mean confidence 0.355 0.287
+Maximum confidence 0.494 0.371
+
+Although unsupported inputs were less confident on average, the confidence
+ranges overlap significantly.
+
+A simple confidence threshold therefore cannot currently separate known and
+UNKNOWN commands without rejecting some valid inputs.
+
+The experiment also demonstrated that classification accuracy and confidence
+calibration are separate problems: validation accuracy was 100%, while some
+correct validation predictions had confidence as low as approximately 0.235.
+
+No UNKNOWN rejection threshold is selected at this stage. OOD rejection will
+be revisited with a larger dataset and later model architectures.
+
