@@ -307,3 +307,40 @@ The dataset remains intentionally small. Metrics produced from this dataset
 will be treated as an experimental baseline rather than evidence of model
 generalisation.
 
+### v0.2 Classical ML Baseline
+
+The first TinyIntent classifier was trained using a classical NLP pipeline:
+
+Text
+|
+v
+TF-IDF
+|
+v
+Logistic Regression
+|
+v
+Intent prediction
+
+The model was trained exclusively on the 40-example training split.
+The validation split was transformed using the TF-IDF representation learned
+from training data and was not included during fitting.
+
+Baseline results:
+
+Training examples: 40
+Validation examples: 10
+TF-IDF features: 80
+Validation accuracy: 1.00
+Validation macro F1: 1.00
+Misclassified examples: 0
+
+All five intents achieved perfect predictions on the initial validation set.
+
+This result is treated cautiously because the validation set contains only
+two examples per intent and several validation commands share discriminative
+vocabulary with the training data.
+
+The result establishes a functional classical ML baseline, not evidence of
+production-level generalisation.
+
