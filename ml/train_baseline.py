@@ -18,6 +18,7 @@ SUPPORTED_PATHS = {
     "train": DATA_DIR / "train.json",
     "validation": DATA_DIR / "validation.json",
     "unknown": DATA_DIR / "unknown.json",
+    "test": DATA_DIR / "test.json",
 }
 
 
@@ -43,10 +44,13 @@ def main() -> None:
         x_validation = []
         y_validation = []
         x_unknown = []
+        x_test = []
+        y_test = []
 
         train_data = load_json(SUPPORTED_PATHS["train"])
         validation_data = load_json(SUPPORTED_PATHS["validation"])
         unknown_data = load_json(SUPPORTED_PATHS["unknown"])
+        test_data = load_json(SUPPORTED_PATHS["test"])
         for record in train_data:
             x_train.append(record["text"])
             y_train.append(record["intent"])
@@ -55,6 +59,9 @@ def main() -> None:
             y_validation.append(record["intent"])
         for record in unknown_data:
             x_unknown.append(record["text"])
+        for record in test_data:
+            x_test.append(record["text"])
+            y_test.append(record["intent"])
 
         print("Training examples:", len(x_train))
         print("Validation examples:", len(x_validation))
@@ -116,6 +123,24 @@ def main() -> None:
             sum(validation_confidences) / len(validation_confidences),
         )
         print("Max confidence: ", max(validation_confidences))
+
+        test_pred = model.predict(x_test)
+
+        print("Test examples")
+
+        for text, expected, predicted in zip(
+            x_test,
+            y_test,
+            test_pred,
+        ):
+            print(f"\nCommand: {text}")
+            print(f"Expected: {expected}")
+            print(f"Predicted: {predicted}")
+
+        print("Accuracy: ", accuracy_score(y_test, test_pred))
+        print("Macro F1: ", f1_score(y_test, test_pred, average="macro"))
+        print("Classification Report: ", classification_report(y_test, test_pred))
+        print("Confusion Matrix: ", confusion_matrix(y_test, test_pred))
 
     except (FileNotFoundError, json.JSONDecodeError, ValueError) as error:
         print(f"JSON extraction failed:\n{error}")

@@ -374,3 +374,47 @@ correct validation predictions had confidence as low as approximately 0.235.
 No UNKNOWN rejection threshold is selected at this stage. OOD rejection will
 be revisited with a larger dataset and later model architectures.
 
+### v0.2 Final Classical Baseline
+
+The frozen TF-IDF + Logistic Regression baseline was evaluated on the
+previously unused test split.
+
+Final results:
+
+Training examples: 40
+TF-IDF features: 80
+
+Validation accuracy: 1.000
+Validation macro F1: 1.000
+
+Test accuracy: 0.900
+Test macro F1: 0.893
+
+One of the ten test commands was misclassified:
+
+Command:
+"start a system diagnostic"
+
+Expected:
+DIAGNOSTICS
+
+Predicted:
+SYSTEM_CONTROL
+
+The result illustrates a limitation of the lexical TF-IDF representation.
+Words such as "start" can become associated with SYSTEM_CONTROL even when
+their meaning depends on the surrounding context.
+
+The test dataset will not be modified to correct this failure. The command is
+retained as a regression case for comparison with future models.
+
+UNKNOWN/OOD confidence analysis also showed overlapping confidence ranges:
+
+Known mean confidence: 0.355
+UNKNOWN mean confidence: 0.287
+
+Therefore no simple confidence threshold was selected for UNKNOWN rejection.
+
+The classical baseline is now frozen for comparison with the neural
+classifier introduced in v0.3.
+
