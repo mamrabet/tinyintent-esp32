@@ -460,3 +460,211 @@ Preprocessing was verified with both known and out-of-vocabulary words.
 This preprocessing contract is intentionally simple because the same behavior
 will later need to be reproduced in C++ on the ESP32-S3.
 
+### v0.3 Neural Baseline 0
+
+The first neural intent classifier was implemented using a deliberately small
+architecture:
+
+8 token IDs
+|
+v
+Embedding(128 x 8)
+|
+v
+GlobalAveragePooling1D
+|
+v
+Dense(16, ReLU)
+|
+v
+Dense(5, Softmax)
+
+The model contains 1,253 trainable parameters.
+
+Training used Adam and sparse categorical cross-entropy with a batch size of
+8 and a maximum of 50 epochs.
+
+Initial experiments produced approximately:
+
+Training accuracy: 0.80 - 0.83
+Validation accuracy: 0.70
+Validation loss: ~1.10
+
+The results varied noticeably between runs because the dataset contains only
+40 training examples and neural-network initialization and training are
+stochastic.
+
+This highlighted the need to control random seeds before comparing model
+architectures.
+
+The classical TF-IDF baseline remained substantially stronger at this stage.
+
+
+### v0.3 Embedding Capacity Experiment
+
+To test whether the initial neural model was limited by representation
+capacity, the embedding dimension was increased from 8 to 16.
+
+All other architectural choices were kept unchanged:
+
+Vocabulary size: 128
+Sequence length: 8
+Hidden layer: 16
+Output classes: 5
+Batch size: 8
+
+The 16-dimensional embedding increased the embedding table from:
+
+128 x 8 = 1,024 parameters
+
+to:
+
+128 x 16 = 2,048 parameters
+
+With a 50-epoch training limit, the larger embedding improved the observed
+results to approximately:
+
+Training accuracy: 1.00
+Validation accuracy: 0.90
+Validation loss: 0.77
+
+This suggested that the 8-dimensional representation was restrictive for the
+current dataset.
+
+No additional model capacity was introduced. Instead, the 16-dimensional
+architecture was retained while the allowed training duration was increased
+to determine whether validation performance would continue to improve.
+
+
+### v0.3 Neural Training Duration Experiment
+
+The 16-dimensional embedding model was trained for up to 150 epochs while
+monitoring validation loss.
+
+The architecture remained unchanged:
+
+Input sequence: 8 token IDs
+Vocabulary size: 128
+Embedding dimension: 16
+Pooling: GlobalAveragePooling1D
+Hidden layer: Dense(16, ReLU)
+Output: Dense(5, Softmax)
+
+Final results:
+
+Training accuracy: 1.00
+Validation accuracy: 1.00
+Training loss: 0.0132
+Validation loss: 0.4128
+Best epoch: 150
+
+Validation accuracy reached 100% during training, while validation loss
+continued decreasing through the maximum epoch limit. Therefore,
+validation-loss-based early stopping did not activate.
+
+The large difference between training and validation loss indicates that the
+model is substantially more confident on its training examples than on
+unseen validation examples.
+
+Because the dataset contains only 40 training examples and 10 validation
+examples, perfect validation accuracy is not treated as evidence of robust
+generalization.
+
+The architecture is now frozen as the v0.3 neural candidate. No additional
+model capacity will be introduced before evaluation on the independent test
+split.
+
+### v0.3 Neural Candidate Test Evaluation
+
+The frozen 16-dimensional neural classifier was evaluated on the independent
+test split.
+
+Results:
+
+Training accuracy: 1.00
+Validation accuracy: 1.00
+Test accuracy: 1.00
+Test errors: 0 / 10
+
+The neural model correctly classified all 10 test commands.
+
+The key regression case from the classical baseline was resolved:
+
+Command:
+"start a system diagnostic"
+
+Expected:
+DIAGNOSTICS
+
+Classical prediction:
+SYSTEM_CONTROL
+
+Neural prediction:
+DIAGNOSTICS
+
+Neural confidence:
+0.506
+
+Correct test predictions showed a substantial confidence range, from
+approximately 0.506 to 0.994. This reinforces that classification correctness
+and confidence calibration should be treated as separate problems.
+
+The test set contains only 10 examples, so perfect test accuracy is recorded
+as a project benchmark rather than evidence of robust real-world
+generalization.
+
+The neural architecture is now frozen. Further increases in model capacity
+are not justified by the current results.
+
+The next engineering step is model export and inference parity testing before
+embedded deployment.
+
+
+The frozen 16-dimensional neural candidate was evaluated on the independent
+test split without modifying the model architecture, preprocessing contract,
+or test data.
+
+Results:
+
+Test examples: 10
+Correct predictions: 10
+Test accuracy: 1.00
+Test macro F1: 1.00
+
+The classical TF-IDF baseline previously achieved:
+
+Test accuracy: 0.90
+Test macro F1: 0.893
+
+The neural candidate correctly classified the regression case that the
+classical baseline missed:
+
+Command:
+"start a system diagnostic"
+
+Expected:
+DIAGNOSTICS
+
+Classical prediction:
+SYSTEM_CONTROL
+
+Neural prediction:
+DIAGNOSTICS
+
+Neural confidence:
+0.506
+
+This result provides evidence that the learned embedding representation can
+capture useful relationships beyond the lexical associations of the TF-IDF
+baseline.
+
+However, the test set contains only 10 examples. Perfect test accuracy is
+therefore recorded as a project benchmark and is not treated as evidence of
+robust real-world generalization.
+
+The neural architecture is now frozen. Further increases in model capacity
+are not justified by the current evaluation results.
+
+The next milestone will focus on exporting the trained model into a format
+suitable for embedded inference.
+
