@@ -782,3 +782,17 @@ dependencies.
   `ml/data/preprocessing_golden.json`: **5/5 PASS**.
 - Measured runtime memory after init: Internal RAM free `340,683` bytes,
   PSRAM free `2,094,964` bytes.
+
+### v0.3 Embedded Inference Runtime Integration (TINY-022)
+
+Integrated `espressif/esp-tflite-micro` via a dedicated `inference` component
+and verified that `tinyintent_dynamic.tflite` (8,136 bytes) loads and allocates
+successfully on the ESP32-S3.
+- **Model embedding:** Embedded `tinyintent_dynamic.tflite` in Flash
+  (`.rodata`) using CMake `EMBED_FILES` (zero RAM copy for model weights).
+- **Supported operators:** Registered the 12 required operators in
+  `MicroMutableOpResolver<12>` (`NotEqual`, `Less`, `Add`, `SelectV2`,
+  `ExpandDims`, `Cast`, `Sum`, `Gather`, `Dequantize`, `Div`,
+  `FullyConnected`, `Softmax`).
+- **Allocation strategy & measured arena:** Static `alignas(16)` buffer in
+  internal RAM; `AllocateTensors()` succeeded with `2,696` bytes used.

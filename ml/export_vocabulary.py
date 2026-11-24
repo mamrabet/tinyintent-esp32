@@ -7,14 +7,10 @@ def main() -> None:
     vocab_json_path = ml_dir / "models" / "vocabulary.json"
     output_hpp_path = ml_dir.parent / "preprocessing" / "vocabulary.hpp"
 
-    # TODO 1: Read and parse vocab_json_path into a dict[str, int]
     vocab: dict[str, int] = json.loads(vocab_json_path.read_text(encoding="utf-8"))
 
-    # TODO 2: Sort items deterministically (e.g., by id: item[1])
     sorted_entries = sorted(vocab.items(), key=lambda item: item[1])
 
-    # TODO 3: Build the C++ entry lines: '    {"token", id},'
-    # Hint: use json.dumps(token) so special characters are safely escaped
     entry_lines: list[str] = [
         f"    {{{json.dumps(k)}, {v}}}," for k, v in sorted_entries
     ]

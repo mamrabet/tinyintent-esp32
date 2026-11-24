@@ -592,6 +592,23 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# ESP-NN
+#
+# CONFIG_NN_ANSI_C is not set
+CONFIG_NN_OPTIMIZED=y
+CONFIG_NN_OPTIMIZATIONS=1
+# CONFIG_NN_SKIP_NUDGE is not set
+
+#
+# Dual-core worker
+#
+CONFIG_NN_DUAL_CORE_WORKER_STACK_SIZE=4096
+CONFIG_NN_DUAL_CORE_WORKER_STACK_INTERNAL_FIRST=y
+# CONFIG_NN_DUAL_CORE_WORKER_STACK_PSRAM is not set
+# end of Dual-core worker
+# end of ESP-NN
+
+#
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEBUG=y
@@ -2273,6 +2290,12 @@ CONFIG_CU_DIAGNOSTICS_COLOR_ALWAYS=y
 # CONFIG_CU_GCC_LTO_ENABLE is not set
 # CONFIG_CU_GCC_STRING_1BYTE_ALIGN is not set
 # end of CMake Utilities
+
+#
+# ESP TFLite-Micro
+#
+CONFIG_ESP_TFLITE_MICRO_USE_ESP_NN=y
+# end of ESP TFLite-Micro
 # end of Component config
 
 # CONFIG_IDF_EXPERIMENTAL_FEATURES is not set

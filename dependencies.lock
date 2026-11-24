@@ -9,6 +9,30 @@ dependencies:
       registry_url: https://components.espressif.com
       type: service
     version: 0.5.3
+  espressif/esp-nn:
+    component_hash: 55d167047662a4dc5cc67981581d5e5a98bdca5be80253921dbc526130ff5317
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.1'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.5.0
+  espressif/esp-tflite-micro:
+    component_hash: 6509fe52baded3968ac4d636c9c932fdfda2f86cf3d2f4f7919cf650ad3b8adc
+    dependencies:
+    - name: espressif/esp-nn
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=1.4.2'
+    - name: idf
+      require: private
+      version: '>=5.1'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.4.3
   espressif/esp_lcd_gc9107:
     component_hash: 92b99c7d98a8c5115d708835bb53761993fe3464a2d4b43d5433b8389402da13
     dependencies:
@@ -28,7 +52,8 @@ dependencies:
       type: idf
     version: 5.5.0
 direct_dependencies:
+- espressif/esp-tflite-micro
 - espressif/esp_lcd_gc9107
-manifest_hash: 9e03598af3e88e7242a6b27a453656010feb3b372b75b8c9a10a113bfa7a4ea7
+manifest_hash: aa2abd36d5fe079a6ac07ddbb78786fb351ea5777195377e621e2ed7d32b080a
 target: esp32s3
 version: 2.0.0
