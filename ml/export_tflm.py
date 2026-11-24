@@ -37,6 +37,8 @@ def main() -> None:
     w2_const = tf.constant(w2, dtype=tf.float32)
     b2_const = tf.constant(b2, dtype=tf.float32)
 
+    # Re-export without keras.layers.Embedding's negative-index SELECT_V2(INT32),
+    # which esp-tflite-micro rejects at Invoke() time.
     @tf.function(input_signature=[tf.TensorSpec(shape=[1, 8], dtype=tf.int32)])
     def forward(x: tf.Tensor) -> tf.Tensor:
         # Lookup embeddings without negative-index SELECT_V2

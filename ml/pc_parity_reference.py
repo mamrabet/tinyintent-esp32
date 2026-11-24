@@ -6,7 +6,6 @@ import tensorflow as tf
 
 from preprocessing import encode_text
 
-
 TEST_COMMANDS = [
     "restart the system",
     "start a system diagnostic",
@@ -18,8 +17,12 @@ TEST_COMMANDS = [
 
 def main() -> None:
     ml_dir = Path(__file__).resolve().parent
-    vocab = json.loads((ml_dir / "models" / "vocabulary.json").read_text(encoding="utf-8"))
-    metadata = json.loads((ml_dir / "models" / "metadata.json").read_text(encoding="utf-8"))
+    vocab = json.loads(
+        (ml_dir / "models" / "vocabulary.json").read_text(encoding="utf-8")
+    )
+    metadata = json.loads(
+        (ml_dir / "models" / "metadata.json").read_text(encoding="utf-8")
+    )
     intents: list[str] = metadata["intents"]
 
     interpreter = tf.lite.Interpreter(

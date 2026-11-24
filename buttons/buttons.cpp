@@ -19,22 +19,18 @@ struct ButtonState {
 static ButtonState button_a{btn_a_pin};
 static ButtonState button_b{btn_b_pin};
 
-void initialise_buttons()
-{
-    gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << btn_a_pin) | (1ULL << btn_b_pin),          
-        .mode = GPIO_MODE_INPUT,                      
-        .pull_up_en = GPIO_PULLUP_ENABLE,             
-        .pull_down_en = GPIO_PULLDOWN_DISABLE,         
-        .intr_type = GPIO_INTR_DISABLE                 
-    };
+void initialise_buttons() {
+    gpio_config_t io_conf = {.pin_bit_mask = (1ULL << btn_a_pin) | (1ULL << btn_b_pin),
+                             .mode = GPIO_MODE_INPUT,
+                             .pull_up_en = GPIO_PULLUP_ENABLE,
+                             .pull_down_en = GPIO_PULLDOWN_DISABLE,
+                             .intr_type = GPIO_INTR_DISABLE};
     ESP_ERROR_CHECK(gpio_config(&io_conf));
 
     ESP_LOGI(TAG, "Buttons initialised");
 }
 
-static bool button_pressed(ButtonState &button)
-{
+static bool button_pressed(ButtonState &button) {
     const uint64_t now = esp_timer_get_time();
 
     // Active-low buttons
@@ -64,8 +60,7 @@ static bool button_pressed(ButtonState &button)
     return button.stable_pressed;
 }
 
-ButtonEvent get_button_event()
-{
+ButtonEvent get_button_event() {
     if (button_pressed(button_a)) {
         return ButtonEvent::BUTTON_A_PRESSED;
     }
@@ -76,5 +71,3 @@ ButtonEvent get_button_event()
 
     return ButtonEvent::NONE;
 }
-
-

@@ -8,15 +8,17 @@
 
 static const char *TAG = "inference";
 
+// Embedded in Flash (.rodata) via CMake EMBED_FILES; no RAM copy needed.
 extern const uint8_t model_start[] asm("_binary_tinyintent_dynamic_tflm_tflite_start");
 
+// 16-byte alignment required by TFLite Micro SIMD kernels.
 static constexpr std::size_t kTensorArenaSize = 4 * 1024;
 alignas(16) static uint8_t tensor_arena[kTensorArenaSize];
 
 static tflite::MicroInterpreter *interpreter = nullptr;
 static bool is_initialised = false;
 
-static void RegisterModelOps(tflite::MicroMutableOpResolver<11>* resolver) {
+static void RegisterModelOps(tflite::MicroMutableOpResolver<11> *resolver) {
     resolver->AddNotEqual();
     resolver->AddMaximum();
     resolver->AddCast();
@@ -30,8 +32,7 @@ static void RegisterModelOps(tflite::MicroMutableOpResolver<11>* resolver) {
     resolver->AddSoftmax();
 }
 
-bool initialise_inference()
-{
+bool initialise_inference() {
     if (is_initialised) {
         return true;
     }
@@ -42,27 +43,25 @@ bool initialise_inference()
         return false;
     }
 
-
     static tflite::MicroMutableOpResolver<11> resolver;
     RegisterModelOps(&resolver);
 
-    static tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize);
+    static tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena,
+                                                       kTensorArenaSize);
 
     interpreter = &static_interpreter;
 
-
-    if(interpreter->AllocateTensors()!= kTfLiteOk) {
+    if (interpreter->AllocateTensors() != kTfLiteOk) {
         ESP_LOGE(TAG, "Error alloacting tensors");
         return false;
     } else {
-        ESP_LOGI(TAG, "Used Arena Bytes: %zu",  get_arena_used_bytes());
+        ESP_LOGI(TAG, "Used Arena Bytes: %zu", get_arena_used_bytes());
         is_initialised = true;
         return true;
-    } 
+    }
 }
 
-InferenceResult run_inference(const std::array<int32_t, MODEL_INPUT_LENGTH>& input_ids)
-{
+InferenceResult run_inference(const std::array<int32_t, MODEL_INPUT_LENGTH> &input_ids) {
     InferenceResult result{false, -1, {}};
     if (!is_initialised || interpreter == nullptr) {
         return result;
@@ -70,7 +69,7 @@ InferenceResult run_inference(const std::array<int32_t, MODEL_INPUT_LENGTH>& inp
 
     std::copy(input_ids.begin(), input_ids.end(), interpreter->input(0)->data.i32);
 
-    if( interpreter->Invoke() != kTfLiteOk){
+    if (interpreter->Invoke() != kTfLiteOk) {
         ESP_LOGE(TAG, "Error running inference");
         return result;
     }
@@ -78,8 +77,8 @@ InferenceResult run_inference(const std::array<int32_t, MODEL_INPUT_LENGTH>& inp
     std::copy_n(interpreter->output(0)->data.f, NUM_INTENTS, result.probabilities.begin());
     float max_prob = result.probabilities[0];
     result.predicted_id = 0;
-    for (uint8_t i = 1; i < NUM_INTENTS; i++){
-        if (result.probabilities[i]>max_prob){
+    for (uint8_t i = 1; i < NUM_INTENTS; i++) {
+        if (result.probabilities[i] > max_prob) {
             max_prob = result.probabilities[i];
             result.predicted_id = static_cast<int32_t>(i);
         }
@@ -88,7 +87,6 @@ InferenceResult run_inference(const std::array<int32_t, MODEL_INPUT_LENGTH>& inp
     return result;
 }
 
-std::size_t get_arena_used_bytes()
-{
+std::size_t get_arena_used_bytes() {
     return (interpreter != nullptr) ? interpreter->arena_used_bytes() : 0;
 }

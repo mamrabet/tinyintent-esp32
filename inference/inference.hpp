@@ -15,7 +15,7 @@ struct InferenceResult {
 };
 
 bool initialise_inference();
-InferenceResult run_inference(const std::array<int32_t, MODEL_INPUT_LENGTH>& input_ids);
+InferenceResult run_inference(const std::array<int32_t, MODEL_INPUT_LENGTH> &input_ids);
 std::size_t get_arena_used_bytes();
 
 #endif // INFERENCE_HPP

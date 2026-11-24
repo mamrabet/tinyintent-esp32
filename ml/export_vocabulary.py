@@ -34,7 +34,6 @@ inline constexpr std::array<VocabularyEntry, {len(vocab)}> VOCABULARY = {{{{
 #endif // VOCABULARY_HPP
 """
 
-    # TODO 4: Write `header` to output_hpp_path (UTF-8 encoding)
     with open(output_hpp_path, "w", encoding="utf-8") as f:
         f.write(header)
 

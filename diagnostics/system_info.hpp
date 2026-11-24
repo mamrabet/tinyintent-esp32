@@ -4,8 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 
-
-
 struct SystemInfo {
     bool psram_available = false;
     uint8_t num_cores = 0;
@@ -19,4 +17,4 @@ struct SystemInfo {
 
 SystemInfo get_system_info();
 
-#endif //SYSTEM_INFO_HPP
+#endif // SYSTEM_INFO_HPP

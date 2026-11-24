@@ -25,12 +25,9 @@ static constexpr uint8_t LCD_HEIGHT = 128;
 
 static const char *TAG = "display";
 
-
 static esp_lcd_panel_handle_t panel_handle = nullptr;
 
-
-void initialise_display()
-{
+void initialise_display() {
 
     // Initialize SPI BUS
     spi_bus_config_t bus_config{};
@@ -40,12 +37,11 @@ void initialise_display()
     bus_config.sclk_io_num = lcd_clk;
     bus_config.quadwp_io_num = -1;
     bus_config.quadhd_io_num = -1;
-    bus_config.max_transfer_sz =
-    LCD_WIDTH * LCD_HEIGHT * sizeof(uint16_t);
+    bus_config.max_transfer_sz = LCD_WIDTH * LCD_HEIGHT * sizeof(uint16_t);
 
     ESP_LOGI(TAG, "Initializing SPI bus");
 
-    ESP_ERROR_CHECK(spi_bus_initialize(lcd_host,&bus_config,SPI_DMA_CH_AUTO));
+    ESP_ERROR_CHECK(spi_bus_initialize(lcd_host, &bus_config, SPI_DMA_CH_AUTO));
 
     // Configure LCD communication over SPI Bus
 
@@ -66,21 +62,21 @@ void initialise_display()
 
     ESP_LOGI(TAG, "Creating LCD panel IO");
 
-    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(static_cast<esp_lcd_spi_bus_handle_t>(lcd_host),&io_config,&io_handle));
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(static_cast<esp_lcd_spi_bus_handle_t>(lcd_host),
+                                             &io_config, &io_handle));
 
     ESP_LOGI(TAG, "LCD panel IO ready");
     // Panel Initialization
     ESP_LOGI(TAG, "Install GC9107 panel driver");
 
     esp_lcd_panel_dev_config_t panel_config{};
-    
-    panel_config.reset_gpio_num = lcd_rst;      
-    panel_config.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR;      
-    panel_config.bits_per_pixel = 16; 
-    panel_config.data_endian = LCD_RGB_DATA_ENDIAN_BIG; 
-    panel_config.flags = {};  
-    panel_config.vendor_config = nullptr;                         
 
+    panel_config.reset_gpio_num = lcd_rst;
+    panel_config.rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR;
+    panel_config.bits_per_pixel = 16;
+    panel_config.data_endian = LCD_RGB_DATA_ENDIAN_BIG;
+    panel_config.flags = {};
+    panel_config.vendor_config = nullptr;
 
     ESP_ERROR_CHECK(esp_lcd_new_panel_gc9107(io_handle, &panel_config, &panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
@@ -91,31 +87,28 @@ void initialise_display()
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
 #endif
 
-
     // Configure GPIO 10 to drive display backlight
     ESP_ERROR_CHECK(gpio_set_direction(lcd_backlight, GPIO_MODE_OUTPUT));
     ESP_ERROR_CHECK(gpio_set_level(lcd_backlight, lcd_backlight_on));
-
-
-
 }
 
-void clear_display(uint16_t color){
+void clear_display(uint16_t color) {
     const uint16_t panel_color = static_cast<uint16_t>((color << 8) | (color >> 8));
-    if (panel_handle){
-        static uint16_t pixels[LCD_WIDTH*LCD_HEIGHT];
-        std::fill(pixels, pixels + LCD_WIDTH*LCD_HEIGHT, panel_color); 
-        ESP_ERROR_CHECK(esp_lcd_panel_draw_bitmap(panel_handle,0,0,LCD_WIDTH,LCD_HEIGHT,pixels));
+    if (panel_handle) {
+        static uint16_t pixels[LCD_WIDTH * LCD_HEIGHT];
+        std::fill(pixels, pixels + LCD_WIDTH * LCD_HEIGHT, panel_color);
+        ESP_ERROR_CHECK(
+            esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, LCD_WIDTH, LCD_HEIGHT, pixels));
     }
 }
 
+// GC9107 expects big-endian RGB565 bytes over SPI.
 static constexpr uint16_t swap_rgb565(uint16_t color) {
     return static_cast<uint16_t>((color << 8) | (color >> 8));
 }
 
-void draw_text(uint16_t x, uint16_t y, std::string_view text,
-               uint16_t fg_color, uint16_t bg_color, uint8_t scale)
-{
+void draw_text(uint16_t x, uint16_t y, std::string_view text, uint16_t fg_color, uint16_t bg_color,
+               uint8_t scale) {
     if (!panel_handle || scale == 0 || scale > 2) {
         return;
     }
@@ -128,12 +121,12 @@ void draw_text(uint16_t x, uint16_t y, std::string_view text,
         if (cursor_x + glyph_w > LCD_WIDTH || y + glyph_h > LCD_HEIGHT) {
             break;
         }
-        const auto& map_c = (c >= 0x20 and c <= 0x7E) ? FONT_5X7[c - 0x20] : FONT_5X7[0];
+        const auto &map_c = (c >= 0x20 and c <= 0x7E) ? FONT_5X7[c - 0x20] : FONT_5X7[0];
 
+        // Per-glyph stack buffer (max 5*2 x 7*2) avoids a full-screen framebuffer.
         uint16_t tile[10 * 14] = {};
 
-        for (uint8_t row = 0; row < 7; row++)
-        {
+        for (uint8_t row = 0; row < 7; row++) {
             for (uint8_t col = 0; col < 5; col++) {
                 bool on = (map_c[col] >> row) & 0x01;
                 const uint16_t color = on ? fg : bg;
