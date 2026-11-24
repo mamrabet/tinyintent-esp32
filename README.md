@@ -6,6 +6,12 @@ TinyIntent is an offline intent classification system designed to explore Edge A
 
 In later versions, TinyIntent will explore lightweight on-device personalisation, allowing the system to adapt to user corrections without retraining the complete neural network.
 
+## Demo
+
+| Ready | Intent (`SYSTEM_CONTROL`) | OOD (`UNKNOWN`) | System Info |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/images/ready.jpg" width="180" alt="Ready"> | <img src="docs/images/intent.jpg" width="180" alt="Intent"> | <img src="docs/images/unknown.jpg" width="180" alt="Unknown"> | <img src="docs/images/sysinfo.jpg" width="180" alt="System Info"> |
+
 ## Motivation
 
 Running intent classification locally can reduce inference latency, preserve data privacy, and allow the system to continue operating without an internet connection.
@@ -24,37 +30,38 @@ Hardware resources such as available flash, RAM, and PSRAM will be measured on t
 
 ## Current Status
 
-**Current milestone:** v0.1 - Embedded Platform Bring-up
+**Current version:** v1.0.0 - Offline Edge AI Intent Classifier
 
-**ML functionality:** Not implemented
-
-v0.1 establishes the embedded platform required by later Edge AI milestones.
+TinyIntent runs end-to-end offline intent classification on the ESP32-S3 across 5 supported intents (`DIAGNOSTICS`, `HELP`, `NETWORK_CONTROL`, `SYSTEM_CONTROL`, `SYSTEM_STATUS`) and rejects unsupported commands as `UNKNOWN`.
 
 Implemented functionality:
 
-- ESP-IDF C++ firmware
-- Component-based firmware architecture
-- Runtime hardware diagnostics
-- Internal RAM and PSRAM monitoring
-- GC9107 display support
-- RGB565 rendering
-- Debounced onboard button input
-- Application state machine
-- FreeRTOS-aware application loop
+- Component-based ESP-IDF 5.5 C++ firmware (`application`, `preprocessing`, `inference`, `serial_input`, `display`, `buttons`, `diagnostics`)
+- Zero-heap ASCII tokenizer and `constexpr` Flash vocabulary (`117` training words) with Python golden-vector parity
+- Embedded TensorFlow Lite Micro (`esp-tflite-micro`) inference using `tinyintent_dynamic_tflm.tflite`
+- Non-blocking USB Serial/JTAG command interface
+- GC9107 128x128 TFT UI with 5x7 bitmap font and `1,024` B strip-buffer clearing
+- Confidence + OOV-ratio `UNKNOWN` rejection (`p1 < 0.50` or `oov_ratio >= 0.80`)
 
-Current application states:
+Measured on ESP32-S3 (controlled 120-example benchmark):
 
+- **Model size (Flash):** `6,576` B (`tinyintent_dynamic_tflm.tflite`)
+- **Tensor arena:** `2,552` B (`4,096` B reserved, `0` B PSRAM used)
+- **End-to-end latency:** `~1.2–1.5 ms` (preprocessing + inference)
+- **Free internal RAM:** `368,795` B
+- **Evaluation:** `10/10` test accuracy, `10/10` `unknown.json` OOD rejection (`max p1 = 0.465`)
+
+Application states:
+
+```text
+READY (Intent / Confidence / Latency)
+  |  Button A
+  v
+SYSTEM_INFO (RAM / PSRAM / Tensor Arena)
+  |  Button B
+  v
 READY
-|
-| Button A
-v
-SYSTEM_INFO
-|
-| Button B
-v
-READY
-
-The temporary v0.1 UI represents these states using solid colors.
+```
 
 ## Roadmap
 
@@ -71,37 +78,60 @@ The temporary v0.1 UI represents these states using solid colors.
 | v0.9 | Embedded optimisation and benchmarking |
 | v1.0 | Portfolio-ready release |
 
-## Building
+## Running From Scratch
 
-The firmware uses ESP-IDF 5.5.x and targets the ESP32-S3.
+### Prerequisites
+- **ESP-IDF 5.5.x** (targeting `esp32s3`)
+- **Python 3.10+**
+- **LILYGO T-QT Pro** connected via a data-capable USB-C cable
 
-Standard ESP-IDF workflow:
-
-idf.py set-target esp32s3
-idf.py build
-idf.py flash
-idf.py monitor
-
-Board-specific configuration is stored in the project configuration.
-
-## ML Training & Model Export
-
-From `tinyintent-esp32/`, install Python dependencies in `ml/requirements.txt` and run:
+### 1. ML Training & Model Export
+From `tinyintent-esp32/`, set up a Python environment and generate the vocabulary header and TFLM model:
 
 ```bash
-# 1. Validate dataset splits
+pip install -r ml/requirements.txt
+
+# Validate dataset splits (80 train / 20 val / 10 test / 10 unknown)
 python ml/dataset_stats.py
 
-# 2. Baseline training (generates vocabulary.json, metadata.json, preprocessing_golden.json, and baseline .tflite)
+# Generate vocabulary, golden vectors, and baseline model
 python ml/train_neural.py
 python ml/export_tflm.py
 python ml/export_vocabulary.py
 
-# 3. Label-smoothed OOD model (trains ls=0.1 model and exports tinyintent_dynamic_tflm.tflite for firmware)
+# Train label-smoothed OOD model (ls=0.1) and export tinyintent_dynamic_tflm.tflite
 python ml/experiment_ood.py
 
-# 4. Verify OOD confidence separation on the exported TFLM model
+# Optional: verify OOD separation on the exported TFLM model
 python ml/ood_analysis.py
+```
+
+### 2. Build, Flash & Monitor Firmware
+`sdkconfig` already enables PSRAM and `USB Serial/JTAG` console I/O. From `tinyintent-esp32/`:
+
+```bash
+idf.py set-target esp32s3
+idf.py build
+idf.py flash monitor
+```
+
+### 3. Usage
+- Type a command in the serial monitor (e.g., `restart the system`, `enable wifi`, `what is the weather today`) and press **Enter** to see the predicted intent, confidence, and latency on both serial and the TFT screen.
+- Press **Button A** to view `SYSTEM_INFO` (RAM, PSRAM, Arena); press **Button B** to return to `READY`.
+
+### Example Serial Output
+
+```text
+I (1038) Application: Internal RAM free: 368795 bytes
+I (1038) Application: PSRAM free: 2095000 bytes
+I (1058) inference: Used Arena Bytes: 2552
+I (1068) Application: Post-inference Internal RAM free: 368399 bytes
+I (1068) Application: Post-inference PSRAM free: 2095000 bytes
+W (16978) Application: Command "what is the weather today" -> UNKNOWN (raw=SYSTEM_STATUS, conf=0.459, oov=0.40, latency=1365 us)
+I (402118) Application: Command "help" -> HELP (id=1, conf=0.924, oov=0.00, latency=1296 us)
+I (410348) Application: Command "help me" -> HELP (id=1, conf=0.952, oov=0.00, latency=1335 us)
+I (418488) Application: Command "flash the system" -> SYSTEM_CONTROL (id=3, conf=0.523, oov=0.00, latency=1325 us)
+I (428728) Application: Command "improve flash memory" -> DIAGNOSTICS (id=0, conf=0.678, oov=0.33, latency=1372 us)
 ```
 
 ## License

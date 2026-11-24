@@ -897,3 +897,21 @@ Compared `ls=0.05`, `ls=0.1`, and penultimate-layer cosine similarity in
   rejection (`max p1 = 0.465` on `tinyintent_dynamic_tflm.tflite`).
 - Exported `tinyintent_fp32.tflite` (`14,092` B) and
   `tinyintent_dynamic_tflm.tflite` (`6,576` B).
+
+## v1.0.0 - Complete Offline Edge AI Intent Classifier
+
+TinyIntent v1.0.0 delivers end-to-end offline intent classification on the
+LILYGO T-QT Pro (ESP32-S3):
+
+- **Embedded C++ Preprocessing (`preprocessing/`):** Zero-heap ASCII tokenizer
+  and `constexpr` Flash vocabulary (`117` training words), verified for exact
+  golden-vector parity.
+- **TFLite Micro Inference (`inference/`):** Custom TFLM-compatible
+  dynamic-range model (`tinyintent_dynamic_tflm.tflite`, `6,576` B, 11 ops,
+  `2,552` B arena, `~1.2–1.5 ms` inference latency, `0` B PSRAM used).
+- **Interactive USB Serial & TFT UI (`serial_input/`, `display/`):**
+  Non-blocking USB Serial/JTAG command input and a 5x7 bitmap font UI with a
+  `1,024` B strip buffer (`368,795` B free internal RAM).
+- **Dataset & OOD Rejection:** Expanded dataset (`80` train / `20` val / `10`
+  test / `10` unknown) trained with `Label Smoothing (ls=0.1)`: `10/10` test
+  accuracy and `10/10` `unknown.json` OOD rejection at `p1 < 0.50`.
