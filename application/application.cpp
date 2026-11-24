@@ -5,6 +5,8 @@
 #include "display.hpp"
 #include "preprocessing.hpp"
 #include "inference.hpp"
+#include "serial_input.hpp"
+#include "serial_input.hpp"
 
 static const char *TAG = "Application";
 
@@ -21,16 +23,16 @@ static SystemInfo system_info{};
 static constexpr uint16_t READY_COLOR = 0x07E0;
 static constexpr uint16_t SYSTEM_INFO_COLOR = 0x001F;
 
+static constexpr const char *kIntents[NUM_INTENTS] = {
+    "DIAGNOSTICS",
+    "HELP",
+    "NETWORK_CONTROL",
+    "SYSTEM_CONTROL",
+    "SYSTEM_STATUS",
+};
+
 static void verify_inference_parity()
 {
-    static constexpr const char *kIntents[NUM_INTENTS] = {
-        "DIAGNOSTICS",
-        "HELP",
-        "NETWORK_CONTROL",
-        "SYSTEM_CONTROL",
-        "SYSTEM_STATUS",
-    };
-
     static constexpr const char *kCommands[] = {
         "restart the system",
         "start a system diagnostic",
@@ -68,6 +70,7 @@ static void verify_inference_parity()
 void initialise_application(){
     initialise_display();
     initialise_buttons();
+    initialise_serial_input();
     system_info = get_system_info();
 
     ESP_LOGI(TAG,"Cores: %d", system_info.num_cores);
@@ -107,5 +110,26 @@ void process_application(){
     if ((event == ButtonEvent::BUTTON_B_PRESSED)&(current_state == AppState::SYSTEM_INFO)){
         current_state = AppState::READY;
         clear_display(READY_COLOR);
+    }
+
+    if (const auto line = poll_serial_line()) {
+        const int64_t t0 = esp_timer_get_time();
+        const EncodedCommand ids = encode_text(*line);
+        const InferenceResult res = run_inference(ids);
+        const int64_t elapsed_us = esp_timer_get_time() - t0;
+
+        if (!res.ok) {
+            ESP_LOGE(TAG, "Inference failed for \"%.*s\"", static_cast<int>(line->size()), line->data());
+            return;
+        }
+
+        ESP_LOGI(TAG,
+                 "Command \"%.*s\" -> %s (id=%d, conf=%.3f, latency=%lld us)",
+                 static_cast<int>(line->size()),
+                 line->data(),
+                 kIntents[res.predicted_id],
+                 static_cast<int>(res.predicted_id),
+                 res.probabilities[res.predicted_id],
+                 static_cast<long long>(elapsed_us));
     }
 }

@@ -817,3 +817,19 @@ TFLite.
   - Latency (encode + invoke): `1,463 us` (1st call), `1,173–1,319 us` steady-state
   - Internal RAM free: `335,119` bytes (`5,564` B total delta vs. TINY-021)
   - PSRAM free: `2,094,964` bytes (`0` B used)
+
+  ### v0.3 USB Serial Command Interface (TINY-024)
+
+Added a non-blocking `serial_input` component so live text commands typed over
+USB serial are preprocessed and classified on-device in the 10 ms application
+loop.
+
+- **Component design:** `serial_input` polls `std::getchar()` into a fixed
+  128-byte static buffer (zero heap allocation, overflow-guarded) and returns
+  completed lines as `std::optional<std::string_view>`.
+- **Console configuration:** Switched primary ESP-IDF console from `UART0` to
+  `USB Serial/JTAG Controller` (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y`) so
+  `stdin` works interactively over the T-QT Pro USB-C port.
+- **Measured live serial inference:**
+  - `"restart the system"` -> `SYSTEM_CONTROL` (`id=3`, `conf=0.952`, `1,323 us`)
+  - `"start a system diagnostic"` -> `DIAGNOSTICS` (`id=0`, `conf=0.507`, `1,357 us`)
