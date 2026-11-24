@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdint>
 #include "display.hpp"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
@@ -7,6 +8,7 @@
 #include "esp_lcd_panel_vendor.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_gc9107.h"
+#include "font5x7.hpp"
 
 static constexpr spi_host_device_t lcd_host = SPI2_HOST;
 
@@ -104,5 +106,48 @@ void clear_display(uint16_t color){
         static uint16_t pixels[LCD_WIDTH*LCD_HEIGHT];
         std::fill(pixels, pixels + LCD_WIDTH*LCD_HEIGHT, panel_color); 
         ESP_ERROR_CHECK(esp_lcd_panel_draw_bitmap(panel_handle,0,0,LCD_WIDTH,LCD_HEIGHT,pixels));
+    }
+}
+
+static constexpr uint16_t swap_rgb565(uint16_t color) {
+    return static_cast<uint16_t>((color << 8) | (color >> 8));
+}
+
+void draw_text(uint16_t x, uint16_t y, std::string_view text,
+               uint16_t fg_color, uint16_t bg_color, uint8_t scale)
+{
+    if (!panel_handle || scale == 0 || scale > 2) {
+        return;
+    }
+    const uint16_t fg = swap_rgb565(fg_color);
+    const uint16_t bg = swap_rgb565(bg_color);
+    const uint16_t glyph_w = 5 * scale;
+    const uint16_t glyph_h = 7 * scale;
+    uint16_t cursor_x = x;
+    for (char c : text) {
+        if (cursor_x + glyph_w > LCD_WIDTH || y + glyph_h > LCD_HEIGHT) {
+            break;
+        }
+        const auto& map_c = (c >= 0x20 and c <= 0x7E) ? FONT_5X7[c - 0x20] : FONT_5X7[0];
+
+        uint16_t tile[10 * 14] = {};
+
+        for (uint8_t row = 0; row < 7; row++)
+        {
+            for (uint8_t col = 0; col < 5; col++) {
+                bool on = (map_c[col] >> row) & 0x01;
+                const uint16_t color = on ? fg : bg;
+                for (uint8_t dy = 0; dy < scale; ++dy) {
+                    for (uint8_t dx = 0; dx < scale; ++dx) {
+                        const uint16_t px = col * scale + dx;
+                        const uint16_t py = row * scale + dy;
+                        tile[py * glyph_w + px] = color;
+                    }
+                }
+            }
+        }
+
+        esp_lcd_panel_draw_bitmap(panel_handle, cursor_x, y, cursor_x + glyph_w, y + glyph_h, tile);
+        cursor_x += 6 * scale; // 5px glyph + 1px spacing
     }
 }

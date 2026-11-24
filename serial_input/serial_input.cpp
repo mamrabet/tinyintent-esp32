@@ -14,16 +14,6 @@ void initialise_serial_input()
 
 std::optional<std::string_view> poll_serial_line()
 {
-    // TODO 1: Loop while ((ch = std::getchar()) != EOF)
-    //   - Cast ch safely to unsigned char / char.
-    //   - If ch is '\r' or '\n':
-    //       * If line_length > 0:
-    //           save length, reset line_length = 0,
-    //           and return std::string_view(line_buffer, completed_length).
-    //       * Otherwise ignore empty lines (e.g., '\r' followed by '\n').
-    //   - Optional: handle backspace ('\b' or 0x7F) by decrementing line_length if > 0.
-    //   - Otherwise, if printable (ch >= 0x20 && ch < 0x7F) and line_length < kMaxLineLength - 1:
-    //       append to line_buffer[line_length++].
 
     std::size_t saved_line_length;
     int ch = 0;

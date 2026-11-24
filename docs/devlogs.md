@@ -833,3 +833,20 @@ loop.
 - **Measured live serial inference:**
   - `"restart the system"` -> `SYSTEM_CONTROL` (`id=3`, `conf=0.952`, `1,323 us`)
   - `"start a system diagnostic"` -> `DIAGNOSTICS` (`id=0`, `conf=0.507`, `1,357 us`)
+
+### v0.3 Real Display UI (TINY-025)
+
+Replaced the temporary solid-color state screens on the 128x128 GC9107 TFT
+with a lightweight bitmap text UI.
+- **Bitmap font (`display/font5x7.hpp`):** Added a `constexpr` 5x7 ASCII
+  bitmap font (95 printable characters, 475 bytes in Flash).
+- **Per-character rendering (`display/display.cpp`):** Implemented `draw_text()`
+  using a stack-allocated per-glyph RGB565 tile (`uint16_t tile[10 * 14]`,
+  supporting `scale = 1` and `2`) and `esp_lcd_panel_draw_bitmap()`, keeping
+  byte-order conversion encapsulated inside `display`.
+- **Application UI (`application/application.cpp`):**
+  - `READY` screen: displays `TinyIntent` title, ready prompt, and after
+    serial inference the predicted intent, confidence (`%`), and latency (`us`).
+  - `SYSTEM_INFO` screen (Button A / Button B): displays free internal RAM,
+    free PSRAM, and TFLM tensor arena usage.
+- Verified visually on the LILYGO T-QT Pro (ESP32-S3).

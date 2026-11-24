@@ -6,7 +6,7 @@
 #include "preprocessing.hpp"
 #include "inference.hpp"
 #include "serial_input.hpp"
-#include "serial_input.hpp"
+#include <cstdio>
 
 static const char *TAG = "Application";
 
@@ -23,6 +23,16 @@ static SystemInfo system_info{};
 static constexpr uint16_t READY_COLOR = 0x07E0;
 static constexpr uint16_t SYSTEM_INFO_COLOR = 0x001F;
 
+static constexpr uint16_t COLOR_BLACK = 0x0000;
+static constexpr uint16_t COLOR_WHITE = 0xFFFF;
+static constexpr uint16_t COLOR_GREEN = 0x07E0;
+static constexpr uint16_t COLOR_CYAN  = 0x07FF;
+
+static bool has_result = false;
+static int32_t last_intent_id = -1;
+static float last_confidence = 0.0f;
+static int64_t last_latency_us = 0;
+
 static constexpr const char *kIntents[NUM_INTENTS] = {
     "DIAGNOSTICS",
     "HELP",
@@ -30,6 +40,39 @@ static constexpr const char *kIntents[NUM_INTENTS] = {
     "SYSTEM_CONTROL",
     "SYSTEM_STATUS",
 };
+
+static void render_ready_screen()
+{
+    clear_display(COLOR_BLACK);
+    draw_text(4, 8, "TinyIntent", COLOR_GREEN, COLOR_BLACK, 2);
+    if (!has_result) {
+        draw_text(4, 40, "READY", COLOR_GREEN, COLOR_BLACK, 1);
+        draw_text(4, 56, "Send cmd via USB", COLOR_GREEN, COLOR_BLACK, 1);
+        return;
+    }
+    char buf[32];
+    draw_text(4, 36, "INTENT:", COLOR_GREEN, COLOR_BLACK, 1);
+    draw_text(4, 48, kIntents[last_intent_id] , COLOR_GREEN, COLOR_BLACK, 1);
+    std::sprintf(buf,"CONF: %.1f%%", last_confidence* 100.0f);
+    draw_text(4, 72, buf , COLOR_GREEN, COLOR_BLACK, 1);
+    std::sprintf(buf,"LAT: %lld us", last_latency_us);
+    draw_text(4, 88, buf , COLOR_GREEN, COLOR_BLACK, 1);
+}
+
+static void render_system_info_screen()
+{
+    clear_display(COLOR_BLACK);
+    draw_text(4, 8, "SYS INFO", COLOR_CYAN, COLOR_BLACK, 2);
+    const SystemInfo info = get_system_info();
+    char buf[32];
+    std::sprintf(buf, "RAM:   %zu KB" , (info.internal_free_heap_bytes / 1024));
+    draw_text(4, 36, buf, COLOR_CYAN, COLOR_BLACK, 1);
+    std::sprintf(buf, "PSRAM: %zu KB" ,  (info.psram_free_bytes / 1024));
+    draw_text(4, 52, buf, COLOR_CYAN, COLOR_BLACK, 1);
+    std::sprintf(buf, "ARENA: %zu B" ,   (get_arena_used_bytes()));
+    draw_text(4, 68, buf, COLOR_CYAN, COLOR_BLACK, 1);
+    draw_text(4, 104, "Btn B: Back", COLOR_CYAN, COLOR_BLACK, 1);
+}
 
 static void verify_inference_parity()
 {
@@ -91,7 +134,7 @@ void initialise_application(){
         ESP_LOGI(TAG, "PSRAM not available");
     }
     current_state = AppState::READY;
-    clear_display(READY_COLOR);
+    render_ready_screen();
     if (initialise_inference()) {
         verify_inference_parity();
         const SystemInfo post_info = get_system_info();
@@ -104,12 +147,12 @@ void process_application(){
     const ButtonEvent event = get_button_event();
     if ((event == ButtonEvent::BUTTON_A_PRESSED)&(current_state == AppState::READY)){
         current_state = AppState::SYSTEM_INFO;
-        clear_display(SYSTEM_INFO_COLOR);
+        render_system_info_screen();
 
     }
     if ((event == ButtonEvent::BUTTON_B_PRESSED)&(current_state == AppState::SYSTEM_INFO)){
         current_state = AppState::READY;
-        clear_display(READY_COLOR);
+        render_ready_screen();
     }
 
     if (const auto line = poll_serial_line()) {
@@ -131,5 +174,12 @@ void process_application(){
                  static_cast<int>(res.predicted_id),
                  res.probabilities[res.predicted_id],
                  static_cast<long long>(elapsed_us));
+        has_result = true;
+        last_intent_id = res.predicted_id;
+        last_confidence = res.probabilities[res.predicted_id];
+        last_latency_us = elapsed_us;
+        if (current_state == AppState::READY) {
+            render_ready_screen();
+        }
     }
 }
