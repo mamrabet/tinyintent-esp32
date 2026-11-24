@@ -1,17 +1,26 @@
 [
-{"text": "switch the controller off", "intent": "SYSTEM_CONTROL"},
-{"text": "boot the system", "intent": "SYSTEM_CONTROL"},
+  {"text": "switch the controller off", "intent": "SYSTEM_CONTROL"},
+  {"text": "boot the system", "intent": "SYSTEM_CONTROL"},
+  {"text": "power off the board", "intent": "SYSTEM_CONTROL"},
+  {"text": "wake the device", "intent": "SYSTEM_CONTROL"},
 
-{"text": "report available memory", "intent": "SYSTEM_STATUS"},
-{"text": "tell me the firmware version", "intent": "SYSTEM_STATUS"},
+  {"text": "report available memory", "intent": "SYSTEM_STATUS"},
+  {"text": "tell me the firmware version", "intent": "SYSTEM_STATUS"},
+  {"text": "show psram status", "intent": "SYSTEM_STATUS"},
+  {"text": "check current heap usage", "intent": "SYSTEM_STATUS"},
 
-{"text": "disable wifi", "intent": "NETWORK_CONTROL"},
-{"text": "start bluetooth", "intent": "NETWORK_CONTROL"},
+  {"text": "disable wifi", "intent": "NETWORK_CONTROL"},
+  {"text": "start bluetooth", "intent": "NETWORK_CONTROL"},
+  {"text": "connect wireless", "intent": "NETWORK_CONTROL"},
+  {"text": "turn off the network", "intent": "NETWORK_CONTROL"},
 
-{"text": "run a hardware check", "intent": "DIAGNOSTICS"},
-{"text": "perform a health check", "intent": "DIAGNOSTICS"},
+  {"text": "run a hardware check", "intent": "DIAGNOSTICS"},
+  {"text": "perform a health check", "intent": "DIAGNOSTICS"},
+  {"text": "check the display", "intent": "DIAGNOSTICS"},
+  {"text": "run a board diagnostic", "intent": "DIAGNOSTICS"},
 
-{"text": "which operations are supported", "intent": "HELP"},
-{"text": "tell me what this device can do", "intent": "HELP"}
+  {"text": "which operations are supported", "intent": "HELP"},
+  {"text": "tell me what this device can do", "intent": "HELP"},
+  {"text": "show supported commands", "intent": "HELP"},
+  {"text": "how do I use this", "intent": "HELP"}
 ]
-

@@ -2,7 +2,7 @@
   {
     "text": "restart the system",
     "encoded": [
-      69,
+      102,
       2,
       3,
       0,
@@ -15,7 +15,7 @@
   {
     "text": "activate hyperspace drive",
     "encoded": [
-      37,
+      58,
       1,
       1,
       0,
@@ -28,8 +28,8 @@
   {
     "text": "enable wifi",
     "encoded": [
-      22,
-      14,
+      39,
+      16,
       0,
       0,
       0,
@@ -41,27 +41,27 @@
   {
     "text": "turn on the system and show device status",
     "encoded": [
-      33,
-      63,
+      15,
+      21,
       2,
       3,
-      1,
-      7,
+      59,
+      5,
       4,
-      76
+      53
     ]
   },
   {
     "text": "turn on the system and show device status right now please",
     "encoded": [
-      33,
-      63,
+      15,
+      21,
       2,
       3,
-      1,
-      7,
+      59,
+      5,
       4,
-      76
+      53
     ]
   }
 ]

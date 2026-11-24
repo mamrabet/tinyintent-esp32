@@ -870,3 +870,16 @@ across `validation.json` (10 known) and `unknown.json` (10 OOD) on PC:
   limited 40-example training diversity.
 - Implemented `(conf < 0.50f) || (oov_ratio >= 0.80f)` in `application.cpp`
   with yellow (`0xFFE0`) `"UNKNOWN"` display feedback; verified live on ESP32-S3.
+
+### Dataset Expansion & Retraining (80 Train / 20 Validation)
+
+Expanded `train.json` (40 -> 80, 16/intent) and `validation.json` (10 -> 20,
+4/intent) while keeping `test.json` (10) and `unknown.json` (10) untouched.
+
+- `dataset_stats.py` passed with `117` unique training words (within the `128`
+  vocabulary cap) and zero cross-split duplicates.
+- Validation loss dropped from `0.4128` to `0.0616`; test accuracy remained
+  `10/10` (`"start a system diagnostic"` confidence improved `0.507` -> `0.992`).
+- Re-exported `vocabulary.hpp` and `tinyintent_dynamic_tflm.tflite` (`6,576` B).
+- Re-ran `ood_analysis.py`: min known validation `p1` rose from `0.508` to
+  `0.594`, while `"what is the weather tomorrow"` dropped `0.849` -> `0.804`.
