@@ -767,4 +767,18 @@ Python training pipeline and the future ESP32 C++ implementation.
 Embedded inference will not be considered valid unless the C++
 preprocessing output matches these golden vectors exactly.
 
+### v0.3 Embedded C++ Preprocessing (TINY-021)
 
+Implemented the `preprocessing` ESP-IDF component in pure C++ (`std::string_view`
+and `std::array<int32_t, 8>`) with zero heap allocations and no hardware driver
+dependencies.
+- Added `ml/export_vocabulary.py` to generate `preprocessing/vocabulary.hpp`
+  from `ml/models/vocabulary.json` as a `constexpr` Flash table (82 entries,
+  deterministically sorted by token ID).
+- Implemented ASCII lowercasing, `\b[\w'-]+\b`-equivalent tokenization,
+  case-insensitive lookup, OOV fallback (`1`), truncation (`8`), and
+  zero-padding (`0`) in `encode_text()`.
+- Verified on-target (ESP32-S3) against all 5 vectors in
+  `ml/data/preprocessing_golden.json`: **5/5 PASS**.
+- Measured runtime memory after init: Internal RAM free `340,683` bytes,
+  PSRAM free `2,094,964` bytes.

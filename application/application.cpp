@@ -2,6 +2,7 @@
 #include "buttons.hpp"
 #include "system_info.hpp"
 #include "display.hpp"
+#include "preprocessing.hpp"
 
 static const char *TAG = "Application";
 
@@ -17,6 +18,53 @@ static SystemInfo system_info{};
 
 static constexpr uint16_t READY_COLOR = 0x07E0;
 static constexpr uint16_t SYSTEM_INFO_COLOR = 0x001F;
+
+static void verify_preprocessing_golden()
+{
+    struct GoldenCase {
+        const char *text;
+        EncodedCommand expected;
+    };
+
+    static constexpr GoldenCase kCases[] = {
+        {"restart the system", {69, 2, 3, 0, 0, 0, 0, 0}},
+        {"activate hyperspace drive", {37, 1, 1, 0, 0, 0, 0, 0}},
+        {"enable wifi", {22, 14, 0, 0, 0, 0, 0, 0}},
+        {"turn on the system and show device status", {33, 63, 2, 3, 1, 7, 4, 76}},
+        {"turn on the system and show device status right now please", {33, 63, 2, 3, 1, 7, 4, 76}},
+    };
+
+    int passed = 0;
+    constexpr int total = sizeof(kCases) / sizeof(kCases[0]);
+
+    for (int i = 0; i < total; ++i) {
+        const EncodedCommand actual = encode_text(kCases[i].text);
+        const bool ok = (actual == kCases[i].expected);
+        if (ok) {
+            ++passed;
+        }
+        ESP_LOGI(TAG,
+                 "TINY-021 [%d/%d] %s: \"%s\" -> [%d,%d,%d,%d,%d,%d,%d,%d]",
+                 i + 1,
+                 total,
+                 ok ? "PASS" : "FAIL",
+                 kCases[i].text,
+                 static_cast<int>(actual[0]),
+                 static_cast<int>(actual[1]),
+                 static_cast<int>(actual[2]),
+                 static_cast<int>(actual[3]),
+                 static_cast<int>(actual[4]),
+                 static_cast<int>(actual[5]),
+                 static_cast<int>(actual[6]),
+                 static_cast<int>(actual[7]));
+    }
+
+    if (passed == total) {
+        ESP_LOGI(TAG, "TINY-021 golden parity: %d/%d PASS", passed, total);
+    } else {
+        ESP_LOGE(TAG, "TINY-021 golden parity: %d/%d PASS (FAIL)", passed, total);
+    }
+}
 
 void initialise_application(){
     initialise_display();
@@ -42,7 +90,7 @@ void initialise_application(){
     }
     current_state = AppState::READY;
     clear_display(READY_COLOR);
-
+    verify_preprocessing_golden();
 }
 
 void process_application(){
