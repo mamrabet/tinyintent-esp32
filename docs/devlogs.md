@@ -883,3 +883,17 @@ Expanded `train.json` (40 -> 80, 16/intent) and `validation.json` (10 -> 20,
 - Re-exported `vocabulary.hpp` and `tinyintent_dynamic_tflm.tflite` (`6,576` B).
 - Re-ran `ood_analysis.py`: min known validation `p1` rose from `0.508` to
   `0.594`, while `"what is the weather tomorrow"` dropped `0.849` -> `0.804`.
+
+
+### Label Smoothing & Final TFLM Model Export
+
+Compared `ls=0.05`, `ls=0.1`, and penultimate-layer cosine similarity in
+`ml/experiment_ood.py` on the expanded dataset (80 train / 20 val / 10 test /
+10 unknown):
+- Penultimate cosine similarity overlapped (`0.789–0.999` validation vs.
+  `0.719–0.932` unknown).
+- `GAP + Label Smoothing (ls=0.1)` achieved `1.000` test accuracy (`10/10`),
+  `18/20` validation acceptance at `p1 >= 0.50`, and `10/10` `unknown.json`
+  rejection (`max p1 = 0.465` on `tinyintent_dynamic_tflm.tflite`).
+- Exported `tinyintent_fp32.tflite` (`14,092` B) and
+  `tinyintent_dynamic_tflm.tflite` (`6,576` B).

@@ -84,6 +84,26 @@ idf.py monitor
 
 Board-specific configuration is stored in the project configuration.
 
+## ML Training & Model Export
+
+From `tinyintent-esp32/`, install Python dependencies in `ml/requirements.txt` and run:
+
+```bash
+# 1. Validate dataset splits
+python ml/dataset_stats.py
+
+# 2. Baseline training (generates vocabulary.json, metadata.json, preprocessing_golden.json, and baseline .tflite)
+python ml/train_neural.py
+python ml/export_tflm.py
+python ml/export_vocabulary.py
+
+# 3. Label-smoothed OOD model (trains ls=0.1 model and exports tinyintent_dynamic_tflm.tflite for firmware)
+python ml/experiment_ood.py
+
+# 4. Verify OOD confidence separation on the exported TFLM model
+python ml/ood_analysis.py
+```
+
 ## License
 
 License selection is pending.
