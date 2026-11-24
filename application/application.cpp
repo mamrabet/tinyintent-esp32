@@ -22,11 +22,30 @@ static constexpr uint16_t COLOR_BLACK = 0x0000;
 static constexpr uint16_t COLOR_WHITE = 0xFFFF;
 static constexpr uint16_t COLOR_GREEN = 0x07E0;
 static constexpr uint16_t COLOR_CYAN = 0x07FF;
+static constexpr uint16_t COLOR_YELLOW = 0xFFE0;
+
+static constexpr float kConfidenceThreshold = 0.50f;
+static constexpr float kOovRatioThreshold = 0.80f;
 
 static bool has_result = false;
+static bool last_is_unknown = false;
 static int32_t last_intent_id = -1;
 static float last_confidence = 0.0f;
 static int64_t last_latency_us = 0;
+
+static float compute_oov_ratio(const EncodedCommand &ids) {
+    int non_pad = 0;
+    int oov = 0;
+    for (const int32_t id : ids) {
+        if (id != PAD_ID) {
+            ++non_pad;
+            if (id == OOV_ID) {
+                ++oov;
+            }
+        }
+    }
+    return (non_pad > 0) ? (static_cast<float>(oov) / static_cast<float>(non_pad)) : 1.0f;
+}
 
 static constexpr const char *kIntents[NUM_INTENTS] = {
     "DIAGNOSTICS", "HELP", "NETWORK_CONTROL", "SYSTEM_CONTROL", "SYSTEM_STATUS",
@@ -41,12 +60,14 @@ static void render_ready_screen() {
         return;
     }
     char buf[32];
-    draw_text(4, 36, "INTENT:", COLOR_GREEN, COLOR_BLACK, 1);
-    draw_text(4, 48, kIntents[last_intent_id], COLOR_GREEN, COLOR_BLACK, 1);
-    std::sprintf(buf, "CONF: %.1f%%", last_confidence * 100.0f);
-    draw_text(4, 72, buf, COLOR_GREEN, COLOR_BLACK, 1);
-    std::sprintf(buf, "LAT: %lld us", last_latency_us);
-    draw_text(4, 88, buf, COLOR_GREEN, COLOR_BLACK, 1);
+    const uint16_t result_color = last_is_unknown ? COLOR_YELLOW : COLOR_GREEN;
+    const char *label = last_is_unknown ? "UNKNOWN" : kIntents[last_intent_id];
+    draw_text(4, 36, "INTENT:", result_color, COLOR_BLACK, 1);
+    draw_text(4, 48, label, result_color, COLOR_BLACK, 1);
+    std::snprintf(buf, sizeof(buf), "CONF: %.1f%%", last_confidence * 100.0f);
+    draw_text(4, 72, buf, result_color, COLOR_BLACK, 1);
+    std::snprintf(buf, sizeof(buf), "LAT: %lld us", static_cast<long long>(last_latency_us));
+    draw_text(4, 88, buf, result_color, COLOR_BLACK, 1);
 }
 
 static void render_system_info_screen() {
@@ -146,13 +167,27 @@ void process_application() {
             return;
         }
 
-        ESP_LOGI(TAG, "Command \"%.*s\" -> %s (id=%d, conf=%.3f, latency=%lld us)",
-                 static_cast<int>(line->size()), line->data(), kIntents[res.predicted_id],
-                 static_cast<int>(res.predicted_id), res.probabilities[res.predicted_id],
-                 static_cast<long long>(elapsed_us));
+        const float confidence = res.probabilities[res.predicted_id];
+        const float oov_ratio = compute_oov_ratio(ids);
+        const bool is_unknown =
+            (confidence < kConfidenceThreshold) || (oov_ratio >= kOovRatioThreshold);
+
+        if (is_unknown) {
+            ESP_LOGW(TAG,
+                     "Command \"%.*s\" -> UNKNOWN (raw=%s, conf=%.3f, oov=%.2f, latency=%lld us)",
+                     static_cast<int>(line->size()), line->data(), kIntents[res.predicted_id],
+                     confidence, oov_ratio, static_cast<long long>(elapsed_us));
+        } else {
+            ESP_LOGI(TAG,
+                     "Command \"%.*s\" -> %s (id=%d, conf=%.3f, oov=%.2f, latency=%lld us)",
+                     static_cast<int>(line->size()), line->data(), kIntents[res.predicted_id],
+                     static_cast<int>(res.predicted_id), confidence, oov_ratio,
+                     static_cast<long long>(elapsed_us));
+        }
         has_result = true;
+        last_is_unknown = is_unknown;
         last_intent_id = res.predicted_id;
-        last_confidence = res.probabilities[res.predicted_id];
+        last_confidence = confidence;
         last_latency_us = elapsed_us;
         if (current_state == AppState::READY) {
             render_ready_screen();

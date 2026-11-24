@@ -850,3 +850,23 @@ with a lightweight bitmap text UI.
   - `SYSTEM_INFO` screen (Button A / Button B): displays free internal RAM,
     free PSRAM, and TFLM tensor arena usage.
 - Verified visually on the LILYGO T-QT Pro (ESP32-S3).
+
+### Strip-Buffer Display Clearing (Memory Optimization)
+
+Replaced the 32,768-byte (`128x128x2`) static framebuffer in `clear_display()`
+with a 4-row stack strip buffer (`128x4x2 = 1,024` bytes) drawn in 32 horizontal
+SPI passes.
+- **Measured internal RAM free:** `335,515` B -> `368,795` B (`+33,280` B).
+
+### OOD / UNKNOWN Rejection (Confidence + OOV Ratio)
+
+Measured `p1`, `margin`, and `oov_ratio` on `tinyintent_dynamic_tflm.tflite`
+across `validation.json` (10 known) and `unknown.json` (10 OOD) on PC:
+
+- Known validation `p1` range: `0.508–0.998`, max `oov_ratio`: `0.75`.
+- OOD `unknown.json`: `p1 < 0.50` rejected `7/10`; adding `oov_ratio >= 0.80`
+  rejected `8/10` while keeping `10/10` validation acceptance.
+- Two `"what is the ..."` OOD queries (`0.849`, `0.781`) still passed due to
+  limited 40-example training diversity.
+- Implemented `(conf < 0.50f) || (oov_ratio >= 0.80f)` in `application.cpp`
+  with yellow (`0xFFE0`) `"UNKNOWN"` display feedback; verified live on ESP32-S3.

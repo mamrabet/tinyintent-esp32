@@ -93,12 +93,15 @@ void initialise_display() {
 }
 
 void clear_display(uint16_t color) {
+
+    constexpr uint16_t kStripHeight = 4;
+    uint16_t strip[LCD_WIDTH * kStripHeight];
     const uint16_t panel_color = static_cast<uint16_t>((color << 8) | (color >> 8));
     if (panel_handle) {
-        static uint16_t pixels[LCD_WIDTH * LCD_HEIGHT];
-        std::fill(pixels, pixels + LCD_WIDTH * LCD_HEIGHT, panel_color);
-        ESP_ERROR_CHECK(
-            esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, LCD_WIDTH, LCD_HEIGHT, pixels));
+        std::fill(strip, strip + LCD_WIDTH * kStripHeight, panel_color);
+        for (uint16_t y = 0; y < LCD_HEIGHT; y += kStripHeight) {
+            esp_lcd_panel_draw_bitmap(panel_handle, 0, y, LCD_WIDTH, y + kStripHeight, strip);
+        }
     }
 }
 
