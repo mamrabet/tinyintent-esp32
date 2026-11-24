@@ -796,3 +796,24 @@ successfully on the ESP32-S3.
   `FullyConnected`, `Softmax`).
 - **Allocation strategy & measured arena:** Static `alignas(16)` buffer in
   internal RAM; `AllocateTensors()` succeeded with `2,696` bytes used.
+
+  ### v0.3 PC / ESP32 Inference Parity & TFLM Export Fix (TINY-023)
+
+Verified end-to-end preprocessing + inference on the ESP32-S3 against PC
+TFLite.
+
+- **Runtime blocker found & resolved:** `Invoke()` initially failed on both
+  `tinyintent_dynamic.tflite` and `tinyintent_fp32.tflite` because Keras's
+  `Embedding` layer emits `SELECT_V2` on `INT32` for negative-index checks,
+  which `esp-tflite-micro` rejects (`int8|int16|float32` only).
+- **TFLM-compatible export (`ml/export_tflm.py`):** Re-exported the exact
+  frozen weights from `tinyintent_fp32.tflite` using `tf.gather` and a
+  `MUL`-based mask with dynamic-range quantization
+  (`tinyintent_dynamic_tflm.tflite`, `6,576` bytes, 11 ops, zero `SELECT_V2`).
+- **PC/ESP32 parity (5 commands):** `0 / 5` prediction mismatches; all
+  probabilities matched PC TFLite to 6 decimal places.
+- **Measured performance & memory:**
+  - Tensor arena used: `2,552` bytes (4,096 B reserved)
+  - Latency (encode + invoke): `1,463 us` (1st call), `1,173–1,319 us` steady-state
+  - Internal RAM free: `335,119` bytes (`5,564` B total delta vs. TINY-021)
+  - PSRAM free: `2,094,964` bytes (`0` B used)

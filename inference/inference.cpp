@@ -8,22 +8,21 @@
 
 static const char *TAG = "inference";
 
-extern const uint8_t model_start[] asm("_binary_tinyintent_dynamic_tflite_start");
+extern const uint8_t model_start[] asm("_binary_tinyintent_dynamic_tflm_tflite_start");
 
-static constexpr std::size_t kTensorArenaSize = 16 * 1024;
+static constexpr std::size_t kTensorArenaSize = 4 * 1024;
 alignas(16) static uint8_t tensor_arena[kTensorArenaSize];
 
 static tflite::MicroInterpreter *interpreter = nullptr;
 static bool is_initialised = false;
 
-static void RegisterModelOps(tflite::MicroMutableOpResolver<12>* resolver) {
+static void RegisterModelOps(tflite::MicroMutableOpResolver<11>* resolver) {
     resolver->AddNotEqual();
-    resolver->AddLess();
-    resolver->AddAdd();
-    resolver->AddSelectV2();
-    resolver->AddExpandDims();
+    resolver->AddMaximum();
     resolver->AddCast();
+    resolver->AddReshape();
     resolver->AddSum();
+    resolver->AddMul();
     resolver->AddGather();
     resolver->AddDequantize();
     resolver->AddDiv();
@@ -44,7 +43,7 @@ bool initialise_inference()
     }
 
 
-    static tflite::MicroMutableOpResolver<12> resolver;
+    static tflite::MicroMutableOpResolver<11> resolver;
     RegisterModelOps(&resolver);
 
     static tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize);

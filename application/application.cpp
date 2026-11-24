@@ -1,4 +1,5 @@
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "buttons.hpp"
 #include "system_info.hpp"
 #include "display.hpp"
@@ -19,6 +20,49 @@ static SystemInfo system_info{};
 
 static constexpr uint16_t READY_COLOR = 0x07E0;
 static constexpr uint16_t SYSTEM_INFO_COLOR = 0x001F;
+
+static void verify_inference_parity()
+{
+    static constexpr const char *kIntents[NUM_INTENTS] = {
+        "DIAGNOSTICS",
+        "HELP",
+        "NETWORK_CONTROL",
+        "SYSTEM_CONTROL",
+        "SYSTEM_STATUS",
+    };
+
+    static constexpr const char *kCommands[] = {
+        "restart the system",
+        "start a system diagnostic",
+        "enable wifi",
+        "what can you do",
+        "activate hyperspace drive",
+    };
+
+    for (const char *cmd : kCommands) {
+        const int64_t t0 = esp_timer_get_time();
+        const EncodedCommand ids = encode_text(cmd);
+        const InferenceResult res = run_inference(ids);
+        const int64_t elapsed_us = esp_timer_get_time() - t0;
+
+        if (!res.ok) {
+            ESP_LOGE(TAG, "TINY-023 FAIL: \"%s\"", cmd);
+            continue;
+        }
+
+        ESP_LOGI(TAG,
+                 "TINY-023 \"%s\" -> pred=%d (%s) latency=%lld us probs=[%.6f, %.6f, %.6f, %.6f, %.6f]",
+                 cmd,
+                 static_cast<int>(res.predicted_id),
+                 kIntents[res.predicted_id],
+                 static_cast<long long>(elapsed_us),
+                 res.probabilities[0],
+                 res.probabilities[1],
+                 res.probabilities[2],
+                 res.probabilities[3],
+                 res.probabilities[4]);
+    }
+}
 
 
 void initialise_application(){
@@ -45,7 +89,12 @@ void initialise_application(){
     }
     current_state = AppState::READY;
     clear_display(READY_COLOR);
-    initialise_inference();
+    if (initialise_inference()) {
+        verify_inference_parity();
+        const SystemInfo post_info = get_system_info();
+        ESP_LOGI(TAG, "Post-inference Internal RAM free: %zu bytes", post_info.internal_free_heap_bytes);
+        ESP_LOGI(TAG, "Post-inference PSRAM free: %zu bytes", post_info.psram_free_bytes);
+    }
 }
 
 void process_application(){
